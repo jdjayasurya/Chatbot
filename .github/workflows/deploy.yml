@@ -1,0 +1,48 @@
+name : Build and Deploy Chatbot
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/chatbot:latest
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/Chatbot
+            git pull origin main
+
+            cat > .env << EOF
+            GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
+            MISTRAL_API_KEY=${{ secrets.MISTRAL_API_KEY }}
+            GCP_API_KEY=${{ secrets.GCP_API_KEY }}
+            EOF
+
+            docker pull ${{ secrets.DOCKER_USERNAME }}/chatbot:latest
+
+            docker stop chatbot || true
+            docker rm chatbot || true
+
+            docker run -d --name chatbot -p 7860:7860 --env-file .env ${{ secrets.DOCKER_USERNAME }}/chatbot:latest
