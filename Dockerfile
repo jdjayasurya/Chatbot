@@ -6,5 +6,5 @@ COPY . /app
 
 RUN pip install --no-cache-dir -r requirements.txt.txt
 
-CMD ["python3","chat_gui.py"]
+CMD ["python3","chatbot_gui.py"]
                             
