@@ -9,7 +9,7 @@ class chatbot:
         load_dotenv()
         self.api_key = os.getenv("GROQ_API_KEY")
     def initialize_llm(self):
-        llm = ChatGroq(model="llama-3.1-8b-instant", api_key=self.api_key)
+        llm = ChatGroq(model="openai/gpt-oss-20b", api_key=self.api_key)
         return llm
     
     def chain_model(self, llm):
